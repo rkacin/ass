@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrum Maturity Assessment - Student Team Survey</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    h1, h2 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    textarea, input[type="text"], input[type="number"] {
+      width: 100%; padding: 8px; margin-top: 5px;
+    }
+    .submit-button {
+      background-color: #4CAF50; color: white; padding: 10px 20px;
+      border: none; cursor: pointer; display: block; margin: auto;
+    }
+    canvas { max-width: 700px; margin: 30px auto; display: block; }
+    #resultsContainer { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
+    .result-entry { background-color: #f9f9f9; padding: 10px; margin-bottom: 10px; border-left: 4px solid #4CAF50; }
+  </style>
+</head>
+<body>
+  <h1>Scrum Maturity Assessment</h1>
+  <h2>Student Team Survey</h2>
+  <p>This form collects feedback on your Scrum team's practices. Each section should be rated from 1 (lowest) to 4 (highest).
+     After submission, your data will appear below along with a radar chart for team discussion and reflection.</p>
+  <form id="scrumForm">
+    <label>Respondent Name:</label>
+    <input type="text" name="respondent"><br><br>
+
+    <label>Team Name:</label>
+    <input type="text" name="team_name"><br><br>
+
+    <label>Sprint Number:</label>
+    <input type="text" name="sprint_number"><br><br>
+
+    <label>Date:</label>
+    <input type="text" name="date"><br><br>
+
+    <table>
+      <tr>
+        <th>Dimension</th>
+        <th>Description</th>
+        <th>Rating (1–4)</th>
+        <th>Notes / Examples</th>
+      </tr>
+      <tr>
+        <td>Roles</td>
+        <td>Are the roles (Scrum Master, Product Owner, Developers) clear and followed?</td>
+        <td><input type="number" name="roles_rating" min="1" max="4" required></td>
+        <td><textarea name="roles_notes"></textarea></td>
+      </tr>
+      <tr>
+        <td>Events</td>
+        <td>Are Scrum events (Planning, Daily Scrum, Review, Retrospective) regular and useful?</td>
+        <td><input type="number" name="events_rating" min="1" max="4" required></td>
+        <td><textarea name="events_notes"></textarea></td>
+      </tr>
+      <tr>
+        <td>Artifacts</td>
+        <td>Are your Product Backlog, Sprint Backlog, and Increment visible and updated?</td>
+        <td><input type="number" name="artifacts_rating" min="1" max="4" required></td>
+        <td><textarea name="artifacts_notes"></textarea></td>
+      </tr>
+      <tr>
+        <td>Team Collaboration</td>
+        <td>Do team members collaborate regularly and effectively?</td>
+        <td><input type="number" name="collab_rating" min="1" max="4" required></td>
+        <td><textarea name="collab_notes"></textarea></td>
+      </tr>
+      <tr>
+        <td>Continuous Improvement</td>
+        <td>Do you run retrospectives and make real improvements?</td>
+        <td><input type="number" name="improve_rating" min="1" max="4" required></td>
+        <td><textarea name="improve_notes"></textarea></td>
+      </tr>
+    </table>
+
+    <h3>Summary & Action Plan</h3>
+    <label>Strongest Area(s):</label>
+    <textarea name="strengths"></textarea><br><br>
+
+    <label>Area(s) to Improve:</label>
+    <textarea name="improvements"></textarea><br><br>
+
+    <label>Improvement Goal for Next Sprint:</label>
+    <textarea name="goal1"></textarea>
+    <textarea name="goal2"></textarea><br><br>
+
+    <button type="submit" class="submit-button">Submit</button>
+  </form>
+
+  <canvas id="radarChart"></canvas>
+
+  <div id="resultsContainer">
+    <h2>Submitted Responses</h2>
+  </div>
+
+  <script>
+    const form = document.getElementById('scrumForm');
+    const radarChart = document.getElementById('radarChart').getContext('2d');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    const results = [];
+    let chartInstance = null;
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data = {
+        respondent: formData.get('respondent'),
+        team: formData.get('team_name'),
+        roles: Number(formData.get('roles_rating')),
+        events: Number(formData.get('events_rating')),
+        artifacts: Number(formData.get('artifacts_rating')),
+        collab: Number(formData.get('collab_rating')),
+        improve: Number(formData.get('improve_rating')),
+        strengths: formData.get('strengths'),
+        improvements: formData.get('improvements'),
+        goal1: formData.get('goal1'),
+        goal2: formData.get('goal2')
+      };
+
+      results.push(data);
+
+      const labels = ['Roles', 'Events', 'Artifacts', 'Collaboration', 'Improvement'];
+      const datasets = results.map((r, index) => ({
+        label: r.respondent || `Respondent ${index + 1}`,
+        data: [r.roles, r.events, r.artifacts, r.collab, r.improve],
+        fill: true,
+        backgroundColor: `rgba(${100 + index * 30}, 99, 255, 0.2)`,
+        borderColor: `rgba(${100 + index * 30}, 99, 255, 1)`,
+        borderWidth: 1
+      }));
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(radarChart, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          scales: {
+            r: {
+              min: 0,
+              max: 4,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Scrum Maturity Radar Chart (All Respondents)'
+            }
+          }
+        }
+      });
+
+      const entry = document.createElement('div');
+      entry.className = 'result-entry';
+      entry.innerHTML = `
+        <strong>${data.respondent}</strong> (Team: ${data.team})<br>
+        <strong>Strengths:</strong> ${data.strengths}<br>
+        <strong>Improvements:</strong> ${data.improvements}<br>
+        <strong>Next Goals:</strong> ${data.goal1}, ${data.goal2}<br>
+      `;
+      resultsContainer.appendChild(entry);
+
+      form.reset();
+    });
+  </script>
+</body>
+</html>
